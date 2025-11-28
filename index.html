@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام حضور وغياب الموظفين المتطور</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --success: #4cc9f0;
+            --warning: #f72585;
+            --danger: #e63946;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --bg-gradient: linear-gradient(135deg, #4361ee, #3a0ca3);
+            --sidebar-width: 280px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            line-height: 1.6;
+            display: flex;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--bg-gradient);
+            color: white;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            right: 0;
+            padding: 1.5rem 1rem;
+            box-shadow: 5px 0 15px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        .sidebar-header {
+            text-align: center;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 1.5rem;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-header p {
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+
+        .nav-links {
+            list-style: none;
+        }
+
+        .nav-links li {
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-links a {
+            display: flex;
+            align-items: center;
+            padding: 0.8rem 1rem;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(-5px);
+        }
+
+        .nav-links i {
+            margin-left: 10px;
+            font-size: 1.2rem;
+        }
+
+        .main-content {
+            flex: 1;
+            margin-right: var(--sidebar-width);
+            padding: 1.5rem;
+            transition: all 0.3s;
+        }
+
+        .page {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        header {
+            background: var(--bg-gradient);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+            z-index: 1;
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            text-align: center;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        header p {
+            text-align: center;
+            opacity: 0.9;
+            position: relative;
+            z-index: 2;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 15px;
+            font-size: 1.8rem;
+            color: white;
+        }
+
+        .present .stat-icon { background: var(--success); }
+        .late .stat-icon { background: var(--warning); }
+        .absent .stat-icon { background: var(--danger); }
+        .total .stat-icon { background: var(--primary); }
+
+        .stat-info h3 {
+            font-size: 1.8rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .stat-info p {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
+            margin-bottom: 1.5rem;
+        }
+
+        .card:hover {
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.7rem;
+            border-bottom: 2px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+        }
+
+        .card h2 i {
+            margin-left: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border 0.3s, box-shadow 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn i {
+            margin-left: 8px;
+        }
+
+        .btn:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-block {
+            display: block;
+            width: 100%;
+        }
+        
+        /* زر الاستعلام الجديد */
+        .btn-secondary {
+            background: var(--gray);
+        }
+
+        .btn-secondary:hover {
+            background: var(--dark);
+        }
+
+        .btn-success {
+            background: var(--success);
+        }
+
+        .btn-warning {
+            background: var(--warning);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+        }
+
+        .attendance-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-top: 1.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: right;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.3rem 0.6rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .badge-present {
+            background: rgba(76, 201, 240, 0.2);
+            color: var(--success);
+        }
+
+        .badge-late {
+            background: rgba(247, 37, 133, 0.2);
+            color: var(--warning);
+        }
+
+        .badge-absent {
+            background: rgba(230, 57, 70, 0.2);
+            color: var(--danger);
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            color: var(--gray);
+            cursor: pointer;
+            margin-right: 10px;
+            transition: color 0.3s;
+        }
+
+        .action-btn:hover {
+            color: var(--primary);
+        }
+
+        .developer-card {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .developer-avatar {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            margin: 0 auto 1.5rem;
+            background: var(--bg-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3.5rem;
+            color: white;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .developer-info {
+            margin-bottom: 1.5rem;
+        }
+
+        .developer-info h3 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .developer-info p {
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .developer-info i {
+            margin-left: 8px;
+            color: var(--primary);
+        }
+
+        .contact-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 1.5rem;
+        }
+
+        .thank-you {
+            text-align: center;
+            padding: 2rem;
+            background: var(--bg-gradient);
+            color: white;
+            border-radius: 15px;
+            margin-top: 2rem;
+        }
+
+        .thank-you h3 {
+            margin-bottom: 1rem;
+            font-size: 1.8rem;
+        }
+
+        .thank-you p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            z-index: 1000;
+            transform: translateX(150%);
+            transition: transform 0.5s;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification i {
+            margin-left: 10px;
+            font-size: 1.5rem;
+        }
+
+        .notification.success i {
+            color: var(--success);
+        }
+
+        .notification.error i {
+            color: var(--danger);
+        }
+
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 0.5rem;
+            font-size: 1.5rem;
+            z-index: 1100;
+            cursor: pointer;
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                transform: translateX(100%);
+            }
+            
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-right: 0;
+            }
+            
+            .menu-toggle {
+                display: block;
+            }
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .attendance-table-container {
+            overflow-x: auto;
+        }
+
+        .attendance-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .attendance-table th {
+            background-color: var(--primary);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .attendance-table td {
+            padding: 0.8rem;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+
+        .attendance-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .attendance-table tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .status-present {
+            background-color: rgba(76, 201, 240, 0.2);
+            color: var(--success);
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        .status-late {
+            background-color: rgba(247, 37, 133, 0.2);
+            color: var(--warning);
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        .status-absent {
+            background-color: rgba(230, 57, 70, 0.2);
+            color: var(--danger);
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <button class="menu-toggle" id="menuToggle">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2><i class="fas fa-user-clock"></i> نظام الحضور</h2>
+            <p>إدارة حضور الموظفين بكل سهولة</p>
+        </div>
+        <ul class="nav-links">
+            <li><a href="#" class="nav-link" data-page="dashboard"><i class="fas fa-tachometer-alt"></i> لوحة التحكم</a></li>
+            <li><a href="#" class="nav-link" data-page="employees"><i class="fas fa-users"></i> إدارة الموظفين</a></li>
+            <li><a href="#" class="nav-link" data-page="attendance"><i class="fas fa-clipboard-check"></i> تسجيل الحضور</a></li>
+            <li><a href="#" class="nav-link" data-page="attendance-report"><i class="fas fa-file-alt"></i> كشف الحضور والغياب</a></li>
+            <li><a href="#" class="nav-link" data-page="developer"><i class="fas fa-user-tie"></i> معلومات المبرمج</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="page" id="dashboard">
+            <header>
+                <h1><i class="fas fa-tachometer-alt"></i> لوحة التحكم</h1>
+                <p>نظرة عامة على نظام حضور وغياب الموظفين</p>
+            </header>
+
+            <div class="dashboard">
+                <div class="stat-card present">
+                    <div class="stat-icon">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="present-count">0</h3>
+                        <p>حضور اليوم</p>
+                    </div>
+                </div>
+                <div class="stat-card late">
+                    <div class="stat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="late-count">0</h3>
+                        <p>متأخرون اليوم</p>
+                    </div>
+                </div>
+                <div class="stat-card absent">
+                    <div class="stat-icon">
+                        <i class="fas fa-user-times"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="absent-count">0</h3>
+                        <p>غائبون اليوم</p>
+                    </div>
+                </div>
+                <div class="stat-card total">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="total-count">0</h3>
+                        <p>إجمالي الموظفين</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="two-column">
+                <div class="card">
+                    <h2><i class="fas fa-history"></i> آخر سجلات الحضور</h2>
+                    <div style="overflow-x: auto;">
+                        <table id="recent-attendance-table">
+                            <thead>
+                                <tr>
+                                    <th>التاريخ</th>
+                                    <th>اسم الموظف</th>
+                                    <th>الحالة</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2><i class="fas fa-chart-pie"></i> إحصائيات سريعة</h2>
+                    <div id="quickStatsChart">
+                        <div style="display: flex; justify-content: space-around; margin-top: 1.5rem;">
+                            <div style="text-align: center;">
+                                <div style="width: 100px; height: 100px; border-radius: 50%; background: conic-gradient(var(--success) 0% 70%, var(--warning) 70% 85%, var(--danger) 85% 100%); display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+                                    <div style="width: 70px; height: 70px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">70%</div>
+                                </div>
+                                <p style="margin-top: 0.5rem;">نسبة الحضور</p>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="width: 100px; height: 100px; border-radius: 50%; background: conic-gradient(var(--warning) 0% 15%, #eee 15% 100%); display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+                                    <div style="width: 70px; height: 70px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">15%</div>
+                                </div>
+                                <p style="margin-top: 0.5rem;">نسبة التأخير</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="page" id="employees">
+            <header>
+                <h1><i class="fas fa-users"></i> إدارة الموظفين</h1>
+                <p>إضافة وحذف وتعديل بيانات الموظفين</p>
+            </header>
+
+            <div class="two-column">
+                <div class="card">
+                    <h2><i class="fas fa-user-plus"></i> إضافة موظف جديد</h2>
+                    <form id="employee-form">
+                        <div class="form-group">
+                            <label for="empName">الاسم الكامل</label>
+                            <input type="text" id="empName" required placeholder="أدخل الاسم الكامل للموظف">
+                        </div>
+                        <div class="form-group">
+                            <label for="empId">معرف الموظف</label>
+                            <input type="text" id="empId" required placeholder="مثل: 123">
+                        </div>
+                        <div class="form-group">
+                            <label for="empDept">القسم</label>
+                            <select id="empDept" required>
+                                <option value="">اختر القسم</option>
+                                <option value="قائد فصيلة ">قائد فصيلة</option>
+                                <option value="فرد">فرد</option>
+                                <option value="كاتب">كاتب</option>
+                                <option value="تسليح">تسليح</option>
+                                <option value="قائد جماعة ">قائد جماعة</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="empRole">رقم السلاح</label>
+                            <input type="text" id="empRole" required placeholder="مثل 123">
+                        </div>
+                        <div class="form-group">
+                            <label for="empEmail">رقم الجوال </label>
+                            <input type="text" id="empEmail" placeholder="مثل: 77او73">
+                        </div>
+                        <button type="submit" class="btn btn-block"><i class="fas fa-plus-circle"></i> إضافة الموظف</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h2><i class="fas fa-search"></i> استعلام عن حالة موظف</h2>
+                    <div class="form-group">
+                        <label for="queryEmployeeSelect">اختر الموظف للاستعلام</label>
+                        <select id="queryEmployeeSelect" required>
+                            <option value="">اختر موظفًا</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="queryMonthSelect">اختر الشهر للاستعلام</label>
+                        <input type="month" id="queryMonthSelect" required>
+                    </div>
+
+                    <button id="queryEmployeeBtn" class="btn btn-block btn-secondary"><i class="fas fa-question-circle"></i> استعلام عن الحالة</button>
+                    
+                    <div id="employee-status-result" class="card" style="margin-top: 1.5rem; display: none; background-color: #f7f9fc; border: 1px solid #ddd;">
+                        <h4>ملخص حالة الحضور (<span id="query-month-label">الشهر المحدد</span>)</h4>
+                        <p><strong>الإجمالي:</strong> <span id="query-total">0</span> أيام</p>
+                        <p><strong>حضور:</strong> <span id="query-present">0</span> يوم</p>
+                        <p><strong>تأخير:</strong> <span id="query-late">0</span> يوم</p>
+                        <p><strong>غياب:</strong> <span id="query-absent">0</span> يوم</p>
+                        <p style="margin-top: 1rem;"><strong>نسبة الحضور:</strong> <strong id="query-rate">0%</strong></p>
+                        
+                        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px dashed #ccc;">
+                            <h5><i class="fas fa-calendar-times" style="color: var(--danger);"></i> تفصيل أيام الغياب</h5>
+                            <ul id="absent-days-list" style="list-style-type: none; padding-right: 0; margin-top: 0.5rem; font-size: 0.9rem;">
+                                <li>(لا توجد أيام غياب محددة)</li>
+                            </ul>
+                        </div>
+                        </div>
+                </div>
+
+            </div>
+
+            <div class="card" style="margin-top: 20px;">
+                <h2><i class="fas fa-list"></i> قائمة الموظفين</h2>
+                <div style="overflow-x: auto;">
+                    <table id="employee-table">
+                        <thead>
+                            <tr>
+                                <th>المعرف</th>
+                                <th>الاسم</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="page" id="attendance">
+            <header>
+                <h1><i class="fas fa-clipboard-check"></i> تسجيل الحضور</h1>
+                <p>تسجيل حالات الحضور والغياب والتأخير للموظفين</p>
+            </header>
+
+            <div class="two-column">
+                <div class="card">
+                    <h2><i class="fas fa-edit"></i> تسجيل الحضور</h2>
+                    <div class="form-group">
+                        <label for="selectEmployee">اختر الموظف</label>
+                        <select id="selectEmployee">
+                            <option value="">اختر موظفًا</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="attendanceDate">التاريخ</label>
+                        <input type="date" id="attendanceDate">
+                    </div>
+                    <div class="attendance-actions">
+                        <button class="btn btn-success" data-status="present"><i class="fas fa-check"></i> حضور</button>
+                        <button class="btn btn-warning" data-status="late"><i class="fas fa-clock"></i> متأخر</button>
+                        <button class="btn btn-danger" data-status="absent"><i class="fas fa-times"></i> غياب</button>
+                    </div>
+                    <p style="margin-top: 15px; color: #6c757d; font-size: 0.9rem;">
+                        <i class="fas fa-info-circle"></i> اختر الموظف والتاريخ ثم انقر على الحالة المناسبة
+                    </p>
+                </div>
+
+                <div class="card">
+                    <h2><i class="fas fa-history"></i> سجل الحضور</h2>
+                    <div style="overflow-x: auto;">
+                        <table id="attendance-table">
+                            <thead>
+                                <tr>
+                                    <th>التاريخ</th>
+                                    <th>اسم الموظف</th>
+                                    <th>القسم</th>
+                                    <th>الحالة</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="page" id="attendance-report">
+            <header>
+                <h1><i class="fas fa-file-alt"></i> كشف الحضور والغياب</h1>
+                <p>عرض كامل لسجلات الحضور والغياب لجميع الموظفين</p>
+            </header>
+
+            <div class="card">
+                <h2><i class="fas fa-table"></i> كشف الحضور والغياب الشامل</h2>
+                <div class="form-group">
+                    <label for="reportMonth">اختر الشهر</label>
+                    <input type="month" id="reportMonth">
+                </div>
+                <div class="attendance-table-container">
+                    <table class="attendance-table" id="attendance-report-table">
+                        <thead>
+                            <tr>
+                                <th>اسم الموظف</th>
+                                <th>المعرف</th>
+                                <th>القسم</th>
+                                <th>إجمالي الأيام</th>
+                                <th>أيام الحضور</th>
+                                <th>أيام التأخير</th>
+                                <th>أيام الغياب</th>
+                                <th>نسبة الحضور</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="page" id="developer">
+            <header>
+                <h1><i class="fas fa-user-tie"></i> معلومات المبرمج</h1>
+                <p>معلومات عن مطور النظام وطرق التواصل</p>
+            </header>
+
+            <div class="card developer-card">
+                <div class="developer-avatar">
+                    <i class="fas fa-code"></i>
+                </div>
+                <div class="developer-info">
+                    <h3>المبرمج محمد مثنى الجيلاني </h3>
+                    <p><i class="fas fa-phone"></i> 772601151  / 735671184</p>
+                    <p><i class="fas fa-map-marker-alt"></i> الضالع - اليمن</p>
+                    <p><i class="fas fa-envelope"></i> aljylanym098@gmail.com</p>
+                    <p><i class="fas fa-laptop-code"></i> متخصص في تطوير أنظمة إدارة الموظفين</p>
+                </div>
+                <div class="contact-buttons">
+                    <button class="btn btn-success" onclick="showNotification('سيتم الاتصال قريباً', 'success')"><i class="fas fa-phone"></i> اتصل بي</button>
+                    <button class="btn btn-primary" onclick="showNotification('سيتم فتح بريدك الإلكتروني', 'success')"><i class="fas fa-envelope"></i> راسلني</button>
+                </div>
+            </div>
+
+            <div class="thank-you">
+                <h3><i class="fas fa-heart"></i> شكراً لاستخدامك نظامنا</h3>
+                <p>
+                    نشكرك على ثقتك في نظام حضور وغياب الموظفين المتطور. نحن نسعى دائماً لتقديم أفضل الحلول البرمجية 
+                    لتسهيل إدارة الموارد البشرية في مؤسستك. لا تتردد في التواصل معنا لأي استفسارات أو مقترحات لتطوير النظام.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification">
+        <i class="fas fa-check-circle"></i>
+        <div class="notification-content">تمت العملية بنجاح!</div>
+    </div>
+
+    <script>
+        // بيانات التطبيق
+        let employees = JSON.parse(localStorage.getItem('employees')) || [];
+        let attendance = JSON.parse(localStorage.getItem('attendance')) || [];
+
+        // تهيئة التطبيق
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            // **[تعديل مهم]** تفعيل لوحة التحكم كصفحة افتراضية عند التحميل
+            document.querySelector('.nav-link[data-page="dashboard"]').classList.add('active');
+            document.getElementById('dashboard').classList.add('active');
+
+
+            // تعيين التاريخ الحالي كقيمة افتراضية
+            document.getElementById('attendanceDate').valueAsDate = new Date();
+            document.getElementById('reportMonth').valueAsDate = new Date();
+            
+            // تعيين الشهر الحالي كقيمة افتراضية لحقل استعلام الموظف
+            document.getElementById('queryMonthSelect').valueAsDate = new Date();
+            
+            // تحديث واجهة المستخدم
+            updateEmployeeList();
+            updateEmployeeSelect();
+            updateAttendanceTable();
+            updateRecentAttendance();
+            updateStats();
+            updateAttendanceReport();
+            
+            // إضافة موظف جديد
+            document.getElementById('employee-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const empId = document.getElementById('empId').value;
+                const empName = document.getElementById('empName').value;
+                const empDept = document.getElementById('empDept').value;
+                const empRole = document.getElementById('empRole').value;
+                const empEmail = document.getElementById('empEmail').value;
+                
+                // التحقق من عدم تكرار المعرف
+                if (employees.some(emp => emp.id === empId)) {
+                    showNotification('معرف الموظف موجود مسبقاً!', 'error');
+                    return;
+                }
+                
+                // إضافة الموظف
+                employees.push({
+                    id: empId,
+                    name: empName,
+                    department: empDept,
+                    role: empRole,
+                    email: empEmail
+                });
+                
+                // حفظ البيانات وتحديث الواجهة
+                saveData();
+                updateEmployeeList();
+                updateEmployeeSelect();
+                updateStats();
+                updateAttendanceReport();
+                
+                // إعادة تعيين النموذج
+                this.reset();
+                showNotification('تم إضافة الموظف بنجاح!', 'success');
+            });
+            
+            // تسجيل الحضور
+            document.querySelectorAll('.attendance-actions button').forEach(button => {
+                button.addEventListener('click', function() {
+                    const employeeId = document.getElementById('selectEmployee').value;
+                    const date = document.getElementById('attendanceDate').value;
+                    const status = this.getAttribute('data-status');
+                    
+                    if (!employeeId) {
+                        showNotification('يرجى اختيار موظف!', 'error');
+                        return;
+                    }
+                    
+                    if (!date) {
+                        showNotification('يرجى اختيار تاريخ!', 'error');
+                        return;
+                    }
+                    
+                    // تسجيل الحضور
+                    recordAttendance(employeeId, date, status);
+                    updateStats();
+                    updateAttendanceTable();
+                    updateRecentAttendance();
+                    updateAttendanceReport();
+                    showNotification(`تم تسجيل ${getStatusText(status)} للموظف بنجاح!`, 'success');
+                });
+            });
+
+            // استعلام عن حالة الموظف (الزر الجديد)
+            document.getElementById('queryEmployeeBtn').addEventListener('click', function() {
+                queryEmployeeStatus();
+            });
+            
+            // تحديث تقرير الحضور عند تغيير الشهر
+            document.getElementById('reportMonth').addEventListener('change', function() {
+                updateAttendanceReport();
+            });
+            
+            // إدارة التنقل بين الصفحات
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // إزالة النشاط من جميع الروابط
+                    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                    
+                    // إضافة النشاط للرابط المحدد
+                    this.classList.add('active');
+                    const pageId = this.getAttribute('data-page');
+                    document.getElementById(pageId).classList.add('active');
+                    
+                    // إغلاق القائمة الجانبية على الأجهزة الصغيرة
+                    if (window.innerWidth < 992) {
+                        document.getElementById('sidebar').classList.remove('active');
+                    }
+                });
+            });
+            
+            // تبديل القائمة الجانبية
+            document.getElementById('menuToggle').addEventListener('click', function() {
+                document.getElementById('sidebar').classList.toggle('active');
+            });
+            
+            // إضافة بيانات تجريبية عند التحميل الأول
+            if (employees.length === 0) {
+                addSampleData();
+            }
+        });
+        
+        // وظائف التطبيق
+
+        // [تعديل] تم إزالة عمود القسم وعمود الوظيفة من الجدول
+        function updateEmployeeList() {
+            const tbody = document.querySelector('#employee-table tbody');
+            tbody.innerHTML = '';
+            
+            employees.forEach(employee => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${employee.id}</td>
+                    <td>${employee.name}</td>
+                    
+                    <td>
+                        <button class="action-btn delete-employee" data-id="${employee.id}" title="حذف الموظف">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+            
+            // إضافة مستمعي الأحداث لأزرار الحذف
+            document.querySelectorAll('.delete-employee').forEach(button => {
+                button.addEventListener('click', function() {
+                    const employeeId = this.getAttribute('data-id');
+                    deleteEmployee(employeeId);
+                });
+            });
+        }
+        
+        function updateEmployeeSelect() {
+            const selectAttendance = document.getElementById('selectEmployee');
+            const selectQuery = document.getElementById('queryEmployeeSelect'); // الحقل الجديد
+
+            // تنظيف الحقول
+            selectAttendance.innerHTML = '<option value="">اختر موظفًا</option>';
+            selectQuery.innerHTML = '<option value="">اختر موظفًا</option>';
+            
+            employees.forEach(employee => {
+                const optionAttendance = document.createElement('option');
+                optionAttendance.value = employee.id;
+                optionAttendance.textContent = `${employee.name} (${employee.id})`;
+                selectAttendance.appendChild(optionAttendance);
+
+                const optionQuery = document.createElement('option');
+                optionQuery.value = employee.id;
+                optionQuery.textContent = `${employee.name} (${employee.id})`;
+                selectQuery.appendChild(optionQuery);
+            });
+        }
+        
+        function updateAttendanceTable() {
+            const tbody = document.querySelector('#attendance-table tbody');
+            tbody.innerHTML = '';
+            
+            // عرض آخر 10 سجلات حضور
+            const recentAttendance = attendance.slice(-10).reverse();
+            
+            recentAttendance.forEach(record => {
+                const employee = employees.find(emp => emp.id === record.employeeId);
+                if (employee) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${record.date}</td>
+                        <td>${employee.name}</td>
+                        <td>${employee.department}</td>
+                        <td><span class="badge badge-${record.status}">${getStatusText(record.status)}</span></td>
+                    `;
+                    tbody.appendChild(row);
+                }
+            });
+        }
+        
+        function updateRecentAttendance() {
+            const tbody = document.querySelector('#recent-attendance-table tbody');
+            tbody.innerHTML = '';
+            
+            // عرض آخر 5 سجلات حضور
+            const recentAttendance = attendance.slice(-5).reverse();
+            
+            recentAttendance.forEach(record => {
+                const employee = employees.find(emp => emp.id === record.employeeId);
+                if (employee) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${record.date}</td>
+                        <td>${employee.name}</td>
+                        <td><span class="badge badge-${record.status}">${getStatusText(record.status)}</span></td>
+                    `;
+                    tbody.appendChild(row);
+                }
+            });
+        }
+        
+        function updateAttendanceReport() {
+            const tbody = document.querySelector('#attendance-report-table tbody');
+            tbody.innerHTML = '';
+            
+            const selectedMonth = document.getElementById('reportMonth').value;
+            
+            employees.forEach(employee => {
+                // حساب إحصائيات الموظف للشهر المحدد
+                const employeeAttendance = attendance.filter(record => 
+                    record.employeeId === employee.id && record.date.startsWith(selectedMonth)
+                );
+                
+                const totalDays = employeeAttendance.length;
+                const presentDays = employeeAttendance.filter(record => record.status === 'present').length;
+                const lateDays = employeeAttendance.filter(record => record.status === 'late').length;
+                const absentDays = employeeAttendance.filter(record => record.status === 'absent').length;
+                
+                // حساب نسبة الحضور
+                const attendanceRate = totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 0;
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${employee.name}</td>
+                    <td>${employee.id}</td>
+                    <td>${employee.department}</td>
+                    <td>${totalDays}</td>
+                    <td><span class="status-present">${presentDays}</span></td>
+                    <td><span class="status-late">${lateDays}</span></td>
+                    <td><span class="status-absent">${absentDays}</span></td>
+                    <td>${attendanceRate}%</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+        
+        function updateStats() {
+            const today = new Date().toISOString().split('T')[0];
+            
+            // حساب الإحصائيات
+            const todayPresent = attendance.filter(record => 
+                record.date === today && record.status === 'present'
+            ).length;
+            
+            const todayLate = attendance.filter(record => 
+                record.date === today && record.status === 'late'
+            ).length;
+            
+            const todayAbsent = attendance.filter(record => 
+                record.date === today && record.status === 'absent'
+            ).length;
+            
+            // تحديث الواجهة
+            document.getElementById('present-count').textContent = todayPresent;
+            document.getElementById('late-count').textContent = todayLate;
+            document.getElementById('absent-count').textContent = todayAbsent;
+            document.getElementById('total-count').textContent = employees.length;
+        }
+
+        // الدالة المعدلة للاستعلام عن حالة الموظف
+        function queryEmployeeStatus() {
+            const employeeId = document.getElementById('queryEmployeeSelect').value;
+            const selectedMonth = document.getElementById('queryMonthSelect').value;
+            const resultDiv = document.getElementById('employee-status-result');
+            const absentList = document.getElementById('absent-days-list'); // جلب عنصر القائمة
+
+            if (!employeeId || !selectedMonth) {
+                resultDiv.style.display = 'none';
+                showNotification('يرجى اختيار الموظف والشهر للاستعلام!', 'error');
+                return;
+            }
+
+            const monthPrefix = selectedMonth; 
+            
+            // حساب إحصائيات الموظف للشهر المحدد
+            const employeeAttendance = attendance.filter(record => 
+                record.employeeId === employeeId && record.date.startsWith(monthPrefix)
+            );
+            
+            const totalDays = employeeAttendance.length;
+            const presentDays = employeeAttendance.filter(record => record.status === 'present').length;
+            const lateDays = employeeAttendance.filter(record => record.status === 'late').length;
+            const absentRecords = employeeAttendance.filter(record => record.status === 'absent'); // سجلات الغياب
+            const absentDays = absentRecords.length;
+            
+            // حساب نسبة الحضور
+            const attendanceRate = totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 0;
+            
+            // عرض تفاصيل أيام الغياب
+            absentList.innerHTML = '';
+            if (absentDays > 0) {
+                absentRecords.forEach(record => {
+                    const listItem = document.createElement('li');
+                    // عرض اليوم فقط (باستثناء الشهر والسنة)
+                    const dayOnly = record.date.split('-')[2]; 
+                    listItem.textContent = `• اليوم ${dayOnly}`;
+                    absentList.appendChild(listItem);
+                });
+            } else {
+                const listItem = document.createElement('li');
+                listItem.textContent = '(لا توجد أيام غياب في هذا الشهر)';
+                absentList.appendChild(listItem);
+            }
+
+            // تحديث عرض الشهر في الملخص
+            document.getElementById('query-month-label').textContent = monthPrefix;
+            
+            // تحديث واجهة المستخدم
+            document.getElementById('query-total').textContent = totalDays;
+            document.getElementById('query-present').textContent = presentDays;
+            document.getElementById('query-late').textContent = lateDays;
+            document.getElementById('query-absent').textContent = absentDays;
+            document.getElementById('query-rate').textContent = `${attendanceRate}%`;
+            
+            resultDiv.style.display = 'block';
+            showNotification(`تم عرض ملخص حالة الموظف للشهر ${monthPrefix} بنجاح!`, 'success');
+        }
+        
+        function recordAttendance(employeeId, date, status) {
+            // إزالة أي تسجيل سابق لنفس الموظف في نفس التاريخ
+            attendance = attendance.filter(record => 
+                !(record.employeeId === employeeId && record.date === date)
+            );
+            
+            // إضافة التسجيل الجديد
+            attendance.push({
+                employeeId,
+                date,
+                status
+            });
+            
+            saveData();
+        }
+        
+        function deleteEmployee(employeeId) {
+            if (confirm('هل أنت متأكد من رغبتك في حذف هذا الموظف؟')) {
+                // حذف الموظف
+                employees = employees.filter(emp => emp.id !== employeeId);
+                
+                // حذف سجلات الحضور المرتبطة به
+                attendance = attendance.filter(record => record.employeeId !== employeeId);
+                
+                // حفظ البيانات وتحديث الواجهة
+                saveData();
+                updateEmployeeList();
+                updateEmployeeSelect();
+                updateStats();
+                updateAttendanceTable();
+                updateRecentAttendance();
+                updateAttendanceReport();
+                
+                showNotification('تم حذف الموظف بنجاح!', 'success');
+            }
+        }
+        
+        function saveData() {
+            localStorage.setItem('employees', JSON.stringify(employees));
+            localStorage.setItem('attendance', JSON.stringify(attendance));
+        }
+        
+        function getStatusText(status) {
+            switch(status) {
+                case 'present': return 'حضور';
+                case 'late': return 'متأخر';
+                case 'absent': return 'غياب';
+                default: return status;
+            }
+        }
+        
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            const icon = notification.querySelector('i');
+            const content = notification.querySelector('.notification-content');
+            
+            // تحديث المحتوى والنوع
+            content.textContent = message;
+            notification.className = `notification ${type}`;
+            
+            if (type === 'success') {
+                icon.className = 'fas fa-check-circle';
+            } else {
+                icon.className = 'fas fa-exclamation-circle';
+            }
+            
+            // إظهار الإشعار
+            notification.classList.add('show');
+            
+            // إخفاء الإشعار بعد 3 ثوان
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        function addSampleData() {
+            employees = [
+                { id: '01', name: 'أحمد محمد', department: 'فرد', role: 'مطور ويب', email: 'ahmed@company.com' },
+                { id: '02', name: 'محمد أحمد', department: 'فرد', role: 'فرد', email: 'fatima@company.com' },
+                { id: '03', name: 'خالد إبراهيم', department: 'الفرد', role: ' فرد', email: 'khaled@company.com' },
+                { id: '04', name: 'محمد عبدالله', department: 'فرد', role: 'فرد ', email: 'sara@company.com' },
+                { id: '005', name: 'يوسف محمود', department: 'فرد', role: 'فني دعم', email: 'youssef@company.com' }
+            ];
+            
+            const today = new Date().toISOString().split('T')[0];
+            // إنشاء بيانات حضور عشوائية للشهر الحالي
+            const currentMonth = today.substring(0, 7);
+            attendance = [];
+            
+            employees.forEach(employee => {
+                // بيانات الشهر الحالي
+                for (let i = 1; i <= 20; i++) {
+                    const day = i < 10 ? `0${i}` : i;
+                    const date = `${currentMonth}-${day}`;
+                    const status = Math.random() > 0.7 ? 'absent' : (Math.random() > 0.8 ? 'late' : 'present');
+                    
+                    attendance.push({
+                        employeeId: employee.id,
+                        date: date,
+                        status: status
+                    });
+                }
+                
+                // بيانات الشهر الماضي (للتجربة)
+                const lastMonthDate = new Date();
+                lastMonthDate.setMonth(lastMonthDate.getMonth() - 1);
+                const lastMonth = lastMonthDate.toISOString().substring(0, 7);
+                for (let i = 1; i <= 15; i++) {
+                    const day = i < 10 ? `0${i}` : i;
+                    const date = `${lastMonth}-${day}`;
+                    const status = Math.random() > 0.6 ? 'absent' : (Math.random() > 0.75 ? 'late' : 'present');
+                    
+                    attendance.push({
+                        employeeId: employee.id,
+                        date: date,
+                        status: status
+                    });
+                }
+            });
+            
+            saveData();
+            updateEmployeeList();
+            updateEmployeeSelect();
+            updateStats();
+            updateAttendanceTable();
+            updateRecentAttendance();
+            updateAttendanceReport();
+            
+            showNotification('تم تحميل بيانات تجريبية للبدء باستخدام النظام', 'success');
+        }
+    </script>
+</body>
+</html>
